@@ -34,86 +34,78 @@ def find_regions(image):
     regions.sort(key = len, reverse = True)
     return regions
 
-# risk of box being bigger than the image
-def expand_bounding(img, region, expand_factor=1.5, min_size = 256, max_size=512):
-    #expand bounding box to capture more context
+def expand_bounding(img, region, expand_factor=1.5, min_size=256, max_size=512):
     x, y = zip(*region)
     min_x, min_y, max_x, max_y = min(x), min(y), max(x), max(y)
-    width, height = img.size
-    width_center = width//2
-    height_center = height//2
-    bb_width = max_x - min_x
-    bb_height = max_y - min_y
-    x_center = (min_x + max_x)//2
-    y_center = (min_y + max_y)//2
-    current_size = max(bb_width, bb_height)
-    current_size  = int(current_size * expand_factor)
-    if current_size > max_size:
-        current_size = max_size
-    elif current_size < min_size:
-        current_size = min_size
-    x1 = x_center - current_size//2
-    x2 = x_center + current_size//2
-    y1 = y_center - current_size//2
-    y2 = y_center + current_size//2
-    x1_square = x1
-    y1_square = y1
-    x2_square = x2
-    y2_square = y2
-    #move bounding boxes that are partially outside of the image inside the image
-    if (y1_square < 0 or y2_square > (height - 1)) and (x1_square < 0 or x2_square > (width - 1)):
-        #conservative square region
-        if x1_square < 0 and y1_square < 0:
-            x1_square = 0
-            y1_square = 0
-            x2_square = current_size
-            y2_square = current_size
-        elif x2_square > (width - 1) and y1_square < 0:
-            x1_square = width - current_size - 1
-            y1_square = 0
-            x2_square = width - 1
-            y2_square = current_size
-        elif x1_square < 0 and y2_square > (height - 1):
-            x1_square = 0
-            y1_square = height - current_size - 1
-            x2_square = current_size
-            y2_square = height - 1
-        elif x2_square > (width - 1) and y2_square > (height - 1):
-            x1_square = width - current_size - 1
-            y1_square = height - current_size - 1
-            x2_square = width - 1
-            y2_square = height - 1
-        else:
-            x1_square = x1
-            y1_square = y1
-            x2_square = x2
-            y2_square = y2
-    else:
-        if x1_square < 0:
-            difference = x1_square
-            x1_square -= difference
-            x2_square -= difference
-        if x2_square > (width - 1):
-            difference = x2_square - width + 1
-            x1_square -= difference
-            x2_square -= difference
-        if y1_square < 0:
-            difference = y1_square
-            y1_square -= difference
-            y2_square -= difference
-        if y2_square > (height - 1):
-            difference = y2_square - height + 1
-            y1_square -= difference
-            y2_square -= difference
-    # if y1_square < 0 or y2_square > (height - 1):
 
-    #if bounding box goes outside of the image for some reason, set bounds to original, unexpanded values
-    #print(width, height)
-    if x2_square > width or y2_square > height:
-        print("bounding box out of bounds!")
-        print(x1_square, y1_square, x2_square, y2_square)
-        x1_square, y1_square, x2_square, y2_square = min_x, min_y, max_x, max_y
-    return x1_square, y1_square, x2_square, y2_square
+    width, height = img.size
+
+    # +1 because max coordinates are inclusive.
+    region_width = max_x - min_x + 1
+    region_height = max_y - min_y + 1
+
+    # Keep enough room for the ENTIRE region.
+    target_size = int(max(region_width, region_height) * expand_factor)
+    target_size = max(target_size, min_size)
+
+    # IMPORTANT:
+    # Never make the crop smaller than the actual censored region.
+    target_size = max(
+        target_size,
+        region_width,
+        region_height
+    )
+
+    # The old max_size=512 was cutting off long bars.
+    # Allow larger crops; they are still resized to 512x512 later.
+    if max_size is not None:
+        target_size = max(target_size, min(region_width, max_size))
+        target_size = max(target_size, min(region_height, max_size))
+
+    x_center = (min_x + max_x) // 2
+    y_center = (min_y + max_y) // 2
+
+    half = target_size // 2
+
+    x1 = x_center - half
+    y1 = y_center - half
+    x2 = x1 + target_size
+    y2 = y1 + target_size
+
+    # Shift the square back inside the image.
+    if x1 < 0:
+        x2 -= x1
+        x1 = 0
+
+    if y1 < 0:
+        y2 -= y1
+        y1 = 0
+
+    if x2 > width:
+        shift = x2 - width
+        x1 -= shift
+        x2 = width
+
+    if y2 > height:
+        shift = y2 - height
+        y1 -= shift
+        y2 = height
+
+    # Final safety clamp.
+    x1 = max(0, int(x1))
+    y1 = max(0, int(y1))
+    x2 = min(width, int(x2))
+    y2 = min(height, int(y2))
+
+    # print(
+    #     "CROP:",
+    #     "region=", (region_width, region_height),
+    #     "crop=", (x2 - x1, y2 - y1),
+    #     "box=", (x1, y1, x2, y2)
+    # )
+
+    return x1, y1, x2, y2
+
 
 def is_green(pixel):
     r, g, b = pixel

@@ -5,6 +5,19 @@ This project applies an implementation of [Image Inpainting for Irregular Holes 
 
 ![Censored, decensored](/readme_images/mermaid_collage.png)
 
+## ⚠️ CLANKER CODE DISCLAIMER ⚠️
+
+This repository is a port to Python 3.8.x, clanker assistance was used so don't expect me to understand fully what has been changed or how to solve issues previous to this port.
+
+Features added:
+- Python 3.8.x and tensorflow 2.x support.
+- Decensor of long horizontal masks rectangles.
+- .gitignore
+
+Why was this ported to Python 3.8.x?
+- Because uv doesn't have Python 3.6 support and I didn't feel like messing with my OS trying to build Python 3.6.
+
+
 ## What's New?
 - Decensoring images of ANY size
 - Decensoring censors of ANY shape (e.g. bunch of black lines, pink hearts, etc.)
@@ -22,15 +35,24 @@ Binary only available for Windows 64-bit.
 If you want to run the code yourself, you can clone this repo and download the model from https://drive.google.com/open?id=1byrmn6wp0r27lSXcT9MC4j-RQ2R04P1Z. Unzip the file into the /models/ folder.
 
 #### Dependencies (for running the code yourself)
-- Python 3.6.7
-- TensorFlow 1.10
+- Python 3.8.x
+- TensorFlow 2.2.0
 - Keras 2.2.4
 - Pillow
 - h5py
+- uv
 
 No GPU required! Tested on Ubuntu 16.04 and Windows. Tensorflow on Windows is compatible with Python 3 and not Python 2. Tensorflow is not compatible with Python 3.7.
 
 Tensorflow, Keras, Pillow, and h5py can all be installed by running in the command line
+
+Install Python 3.8 and enable the venv.
+```
+uv python install 3.8
+python3.8 -m venv venv
+source venv/bin/activate
+```
+
 
 ```
 $ pip install -r requirements.txt

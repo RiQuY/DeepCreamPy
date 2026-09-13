@@ -1,13 +1,12 @@
 import os
 from datetime import datetime
 
-from keras.models import Model
-from keras.models import load_model
-from keras.optimizers import Adam
-from keras.layers import Input, Conv2D, UpSampling2D, Dropout, LeakyReLU, BatchNormalization, Activation
-from keras.layers.merge import Concatenate
+from tensorflow.keras.models import Model
+from tensorflow.keras.models import load_model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.layers import Input, Conv2D, UpSampling2D, Dropout, LeakyReLU, BatchNormalization, Activation, Concatenate
 #from keras.applications import VGG16
-from keras import backend as K
+from tensorflow.keras import backend as K
 from libs.pconv_layer import PConv2D
 
 
@@ -33,7 +32,8 @@ class PConvUnet(object):
         # self.vgg = self.build_vgg()
         
         # Create UNet-like model
-        self.model = self.build_pconv_unet()
+        # self.model = self.build_pconv_unet()
+        self.model = 0
         
     # def build_vgg(self):
     #     """
@@ -62,7 +62,7 @@ class PConvUnet(object):
         # INPUTS
         inputs_img = Input((self.img_rows, self.img_cols, 3))
         inputs_mask = Input((self.img_rows, self.img_cols, 3))
-        loss_mask = Input((self.img_rows, self.img_cols, 3))
+        # loss_mask = Input((self.img_rows, self.img_cols, 3))
         
         # ENCODER
         def encoder_layer(img_in, mask_in, filters, kernel_size, bn=True):
@@ -106,7 +106,18 @@ class PConvUnet(object):
         outputs = Conv2D(3, 1, activation = 'sigmoid')(d_conv16)        
         
         # Setup the model inputs / outputs
-        model = Model(inputs=[inputs_img, inputs_mask, loss_mask], outputs=outputs)
+        # model = Model(inputs=[inputs_img, inputs_mask, loss_mask], outputs=outputs)
+        model = Model(
+            inputs=[inputs_img, inputs_mask],
+            outputs=outputs
+        )
+
+        # print("MODEL INPUTS:")
+        # for x in model.inputs:
+        #     print(x.name, x.shape)
+
+        # print("MODEL OUTPUT:")
+        # print(model.output)
 
         # Compile the model
         model.compile(
@@ -227,15 +238,36 @@ class PConvUnet(object):
 
     def load(self, filepath, train_bn=True, lr=0.0002):
 
-        # Create UNet-like model
+        K.clear_session()
+
         self.model = self.build_pconv_unet(train_bn, lr)
 
-        # Load weights into model
-        #epoch = 50
-        # epoch = int(os.path.basename(filepath).split("_")[0])
-        # assert epoch > 0, "Could not parse weight file. Should start with 'X_', with X being the epoch"
-        # self.current_epoch = epoch
-        self.model.load_weights(filepath)        
+        # print("\nPConv layers:")
+        # for layer in self.model.layers:
+        #     if isinstance(layer, PConv2D):
+        #         print(
+        #             layer.name,
+        #             len(layer.weights),
+        #             [w.name for w in layer.weights]
+        #         )
+
+        # print("\nCURRENT MODEL LAYERS")
+        # print("=" * 80)
+
+        # for i, layer in enumerate(self.model.layers):
+        #     weights = layer.weights
+
+        #     if any("p_conv2d" in w.name for w in weights):
+        #         print(
+        #             i,
+        #             layer.name,
+        #             [
+        #                 (w.name, tuple(w.shape))
+        #                 for w in weights
+        #             ]
+        #         )
+
+        self.model.load_weights(filepath)
 
     def current_weightfile(self):
         assert self.weight_filepath != None, 'Must specify location of logs'
