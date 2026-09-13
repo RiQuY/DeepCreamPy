@@ -55,7 +55,7 @@ source venv/bin/activate
 
 
 ```
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Limitations
@@ -94,7 +94,7 @@ Decensor the images by double-clicking on the decensor file.
 Decensor the images by running
 
 ```
-$ python decensor.py
+python3.8 decensor.py
 ```
 
 Decensored images will be saved to the "decensor_output" folder. Decensoring takes a few minutes per image.
@@ -116,7 +116,7 @@ Decensor the images by double-clicking on the decensor_mosaic file.
 Decensor the images by running
 
 ```
-$ python decensor.py --is_mosaic=True
+python3.8 decensor.py --is_mosaic=True
 ```
 
 Decensored images will be saved to the "decensor_output" folder. Decensoring takes a few minutes per image.
